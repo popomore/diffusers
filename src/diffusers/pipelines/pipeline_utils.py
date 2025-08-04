@@ -762,6 +762,7 @@ class DiffusionPipeline(ConfigMixin, PushToHubMixin):
         use_onnx = kwargs.pop("use_onnx", None)
         load_connected_pipeline = kwargs.pop("load_connected_pipeline", False)
         quantization_config = kwargs.pop("quantization_config", None)
+        custom_device_map = kwargs.pop("custom_device_map", None)
 
         if torch_dtype is not None and not isinstance(torch_dtype, dict) and not isinstance(torch_dtype, torch.dtype):
             torch_dtype = torch.float32
@@ -966,8 +967,9 @@ class DiffusionPipeline(ConfigMixin, PushToHubMixin):
 
         # 6. device map delegation
         final_device_map = None
-        if device_map is not None:
-            final_device_map = _get_final_device_map(
+        if device_map is not None or custom_device_map is not None:
+            final_device_map_func = custom_device_map or _get_final_device_map
+            final_device_map = final_device_map_func(
                 device_map=device_map,
                 pipeline_class=pipeline_class,
                 passed_class_obj=passed_class_obj,
